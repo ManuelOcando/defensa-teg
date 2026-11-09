@@ -132,6 +132,9 @@ td{background:#FFFFFF}
 #cadena,#eje{stroke:#5C93B5}
 .osc .card:not(.noche){background:linear-gradient(160deg,#16293F,#101F33)}
 .osc .card.noche{background:#0E1C2E;border:1px solid rgba(176,141,69,.35)}
+.aut{border-left:2px solid rgba(176,141,69,.5);padding-left:18px}
+.autn{font:600 30px/1.15 var(--serif);color:#E3CC97;font-feature-settings:'lnum' 1}
+.autd{font-size:22px;line-height:1.4;color:var(--texto-osc);margin-top:8px}
 </style>
 </head>
 <body>
@@ -402,17 +405,38 @@ Para garantizar que todo siga funcionando, cada cambio en el código ejecuta aut
 <section class="sl osc" id="alcance" data-quien="3">
   <p class="ceja">Discusión y alcance</p>
   <h2 class="tit">Lo que confirma, lo que sorprendió y <span class="acento">hasta dónde llega</span></h2>
-  <div class="card carta" style="left:128px;top:450px;width:533px;--g:linear-gradient(90deg,#2E6F95,#3E6E5C)"><p class="etq">Confirma</p><p class="p" style="font-size:26px;margin-top:14px">El potencial de las CNN señalado por los antecedentes, ahora llevado de modelo aislado a servicio en uso</p></div>
-  <div class="card carta" style="left:693px;top:450px;width:533px;--g:linear-gradient(90deg,#B08D45,#8E4B3E)"><p class="etq" style="color:#D9A08F">Sorprendió</p><p class="p" style="font-size:26px;margin-top:14px">Datos “de evaluación” contaminados, un explicador defectuoso y un modelo grande que no aportó exactitud</p></div>
-  <div class="card noche carta" style="left:1259px;top:450px;width:533px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">Límites</p><p class="p" style="font-size:26px;margin-top:14px">Población pediátrica, sin validación clínica prospectiva y un filtro que no reconoce la región anatómica</p></div>
-  <p class="a p fin" style="left:128px;top:830px;width:1664px;font-size:30px">Los resultados valen para el conjunto evaluado; llevarlos a adultos u otros centros exige una evaluación externa.</p>
-  <aside class="notas">¿Cómo se ubican estos resultados frente a lo que ya existía? Confirman lo que anticipaban Lubinus y su equipo sobre las redes convolucionales, y dan un paso más allá de Andrade y de Martín de Diego: el clasificador deja de ser un experimento aislado y se convierte en un servicio que cualquiera puede usar. A su vez, aplica al ámbito de la salud el modelo de software como servicio que Vidaurre había probado en las pequeñas empresas.
-Hubo también cosas que no salieron como esperábamos, y las reportamos: un conjunto de evaluación contaminado, un explicador que no hacía lo que decía y un modelo más grande que no mejoraba nada. Cada una nos obligó a corregir y nos dejó un aprendizaje.
-Y somos claros con los límites. Las radiografías corresponden a población pediátrica; no hemos hecho una validación clínica prospectiva en un hospital; y el filtro detecta imágenes que no son radiografías, pero no distingue si la radiografía es de tórax o de otra parte del cuerpo.
+  <div class="card a" id="confirma" style="left:128px;top:430px;width:1664px;padding:28px 36px">
+    <p class="etq">Confirma y amplía</p>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:30px;margin-top:18px">
+      <div class="aut"><p class="autn">Lubinus y otros (2021)</p><p class="autd">El potencial de las CNN en imágenes diagnósticas, confirmado</p></div>
+      <div class="aut"><p class="autn">Andrade (2021) · Martín de Diego (2022)</p><p class="autd">Del clasificador aislado a un servicio en uso</p></div>
+      <div class="aut"><p class="autn">Vidaurre (2023)</p><p class="autd">El software como servicio, llevado al ámbito de la salud</p></div>
+      <div class="aut"><p class="autn">Qure.ai · Entelai</p><p class="autd">La misma tarea, sin servidores propios ni aceleración gráfica</p></div>
+    </div></div>
+  <div class="card carta" style="left:128px;top:690px;width:816px;height:206px;padding:28px 36px;--g:linear-gradient(90deg,#B08D45,#8E4B3E)"><p class="etq" style="color:#D9A08F">Sorprendió</p><p class="p" style="font-size:25px;margin-top:12px">Un conjunto «de evaluación» que no era independiente, un explicador defectuoso y un modelo grande que no aportó exactitud</p></div>
+  <div class="card noche carta" style="left:976px;top:690px;width:816px;height:206px;padding:28px 36px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">Límites</p><p class="p" style="font-size:25px;margin-top:12px">Población pediátrica, sin validación externa de otro origen ni validación clínica, y un filtro que no reconoce la región anatómica</p></div>
+  <p class="a p fin" style="left:128px;top:915px;width:1664px;font-size:26px">Los resultados valen para el conjunto evaluado; llevarlos a adultos u otros centros exige una evaluación externa.</p>
+  <aside class="notas">¿Cómo se ubican estos resultados frente a lo que ya existía? Confirman lo que anticipaban Lubinus y su equipo sobre las redes convolucionales, y dan un paso más allá de Andrade y de Martín de Diego: el clasificador deja de ser un experimento aislado y se convierte en un servicio que cualquiera puede usar. A su vez, aplica al ámbito de la salud el modelo de software como servicio que Vidaurre había probado en las pequeñas empresas. Y frente a soluciones comerciales como Qure.ai o Entelai, la diferencia es que este servicio no exige servidores propios ni aceleración gráfica.
+Hubo también cosas que no salieron como esperábamos, y las reportamos: un conjunto de evaluación que no era independiente, un explicador que no hacía lo que decía y un modelo más grande que no mejoraba nada. Cada una nos obligó a corregir y nos dejó un aprendizaje.
+Y somos claros con los límites. Las radiografías corresponden a población pediátrica; todavía no tenemos una validación externa con radiografías de otro origen, porque el conjunto que la fuente presentaba como evaluación repetía en su mayoría las imágenes del entrenamiento; no hemos hecho una validación clínica prospectiva en un hospital; y el filtro detecta imágenes que no son radiografías, pero no distingue si la radiografía es de tórax o de otra parte del cuerpo.
 Por eso, los resultados son válidos para el conjunto evaluado. Llevarlos a pacientes adultos, a otros equipos o a otros centros requiere una evaluación externa específica, y eso es justamente lo que proponemos como siguiente paso.</aside>
 </section>
 
-<!-- ==================== 14 · CIERRE ==================== -->
+<!-- ==================== 15 · APORTES ==================== -->
+<section class="sl osc" id="aportes" data-quien="3">
+  <p class="ceja">Aportes</p>
+  <h2 class="tit">Lo que deja este trabajo, <span class="acento">en tres planos</span></h2>
+  <div class="card noche a" id="apoPrin" style="left:128px;top:360px;width:1664px;padding:26px 36px;display:flex;align-items:center;gap:40px"><p class="etq" style="color:var(--oro);flex:0 0 240px;line-height:1.4">Aporte<br>principal</p><p style="font:500 36px/1.25 var(--serif);font-feature-settings:'lnum' 1">Clasificación, explicación visual del resultado, filtrado de entradas y pruebas automáticas, reunidos en un solo servicio web.</p></div>
+  <div class="card apo" style="left:128px;top:560px;width:533px;height:336px;padding:30px 36px"><p class="cifra" style="font-size:70px;color:var(--oro)">01</p><h3 style="margin-top:6px">Práctico</h3><p class="p" style="font-size:25px;margin-top:12px">Una herramienta de triaje que funciona desde el navegador, para centros sin infraestructura especializada</p></div>
+  <div class="card apo" style="left:693px;top:560px;width:533px;height:336px;padding:30px 36px"><p class="cifra" style="font-size:70px;color:var(--oro)">02</p><h3 style="margin-top:6px">Teórico</h3><p class="p" style="font-size:25px;margin-top:12px">Un modelo de tamaño intermedio basta para la tarea; la calibración y la explicabilidad son requisitos, no añadidos</p></div>
+  <div class="card noche apo" style="left:1259px;top:560px;width:533px;height:336px;padding:30px 36px"><p class="cifra" style="font-size:70px;color:var(--oro)">03</p><h3 style="margin-top:6px">Metodológico</h3><p class="p" style="font-size:25px;margin-top:12px">Una metodología híbrida de ocho fases y un procedimiento replicable para verificar la independencia de los datos</p></div>
+  <aside class="notas">¿Qué deja este trabajo? El principal aporte es haber reunido en un solo servicio web la clasificación, la explicación visual del resultado, el filtrado de entradas y un conjunto de pruebas automáticas.
+En lo práctico, le da a un centro sin infraestructura especializada una herramienta de triaje que funciona desde el navegador.
+En lo teórico, muestra que un modelo de tamaño intermedio basta para esta tarea y que la calibración y la explicabilidad deben tratarse como requisitos del sistema, no como añadidos.
+En lo metodológico, deja una metodología híbrida de ocho fases y un procedimiento de verificación de independencia de los datos que otros trabajos pueden replicar.</aside>
+</section>
+
+<!-- ==================== 16 · CIERRE ==================== -->
 <section class="sl osc" id="cierre" data-quien="3">
   <div class="a" id="filo2" style="left:0;top:0;width:20px;height:1080px;background:linear-gradient(180deg,#B08D45,#55657A,#2C4A73)"></div>
   <p class="ceja">Cierre</p>
@@ -423,12 +447,12 @@ Por eso, los resultados son válidos para el conjunto evaluado. Llevarlos a paci
     <path class="traza" id="ecg2" d="M0 55H700L730 55L748 25L770 90L792 8L815 102L838 55H1664" fill="none" stroke="url(#gEcg2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     <circle class="punto" r="7" fill="#2E6F95"/>
   </svg>
-  <div class="a col" style="left:128px;top:690px;width:533px"><p class="etq" style="color:var(--oro)">Aporte</p><p class="p" style="font-size:26px;margin-top:12px">Clasificación, explicación visual, filtrado y pruebas en un solo servicio web</p></div>
+  <div class="a col" style="left:128px;top:690px;width:533px"><p class="etq" style="color:var(--oro)">Objetivos</p><p class="p" style="font-size:26px;margin-top:12px">Los seis específicos cumplidos, en el ámbito del desarrollo y de la validación técnica</p></div>
   <div class="a col" style="left:693px;top:690px;width:533px"><p class="etq" style="color:var(--rosa)">Recomendamos</p><p class="p" style="font-size:26px;margin-top:12px">Diagnosticar los flujos de cada centro, anonimizar las imágenes y recalibrar el umbral</p></div>
   <div class="a col" style="left:1259px;top:690px;width:533px"><p class="etq" style="color:var(--cian)">Siguiente paso</p><p class="p" style="font-size:26px;margin-top:12px">Evaluación en adultos, validación prospectiva y filtro anatómico</p></div>
   <p class="a" id="gracias" style="left:128px;top:880px;font:600 40px var(--serif)">Muchas gracias.</p>
-  <aside class="notas">Para cerrar. El objetivo general se cumplió en el ámbito del desarrollo y de la validación técnica. El principal aporte del trabajo es haber reunido en un solo servicio web la clasificación, la explicación visual del resultado, el filtrado de entradas y un conjunto de pruebas automáticas. En lo práctico, le da a un centro sin infraestructura especializada una herramienta de triaje que funciona desde el navegador.
-En lo teórico, muestra que un modelo de tamaño intermedio basta para esta tarea y que la calibración y la explicabilidad deben tratarse como requisitos del sistema, no como añadidos. En lo metodológico, deja una metodología híbrida de ocho fases y un procedimiento de verificación de independencia de los datos que otros trabajos pueden replicar.
+  <aside class="notas">Para cerrar. Los seis objetivos específicos se cumplieron: analizamos el proceso con los radiólogos, definimos los requerimientos, diseñamos y construimos el sistema, lo verificamos con ciento diecisiete pruebas y entregamos el manual de usuario. Con ello, el objetivo general se cumplió en el ámbito del desarrollo y de la validación técnica.
+Lo que quedó fuera, la población adulta y la validación con radiografías de otro hospital, no dependía del desarrollo: el conjunto público disponible era pediátrico, el conjunto de evaluación de la fuente no era independiente y una validación clínica exige permisos y tiempos que superan un trabajo de grado.
 A los centros de salud les recomendamos diagnosticar primero sus flujos de trabajo e incluir a sus radiólogos en el diseño, anonimizar las imágenes y tratar el umbral de noventa y nueve por ciento como un valor que se recalibra, no como una regla fija. Para futuras investigaciones quedan abiertas tres líneas: evaluar el sistema en pacientes adultos, validarlo de forma prospectiva en un entorno clínico real y enseñarle a reconocer la región anatómica.
 Si tuviéramos que resumirlo en una idea: este sistema no reemplaza al radiólogo; le dice por dónde empezar. En un servicio donde cada placa espera lo mismo, eso puede significar atender primero a quien más lo necesita.
 Muchas gracias.</aside>
@@ -613,8 +637,15 @@ var ESCENAS={
     sl._ambiente.push(gsap.fromTo("#escaner",{y:-110},{y:676,duration:2.8,ease:"none",repeat:-1,paused:true}));
   },
   alcance:function(tl,sl){
-    tl.from(sl.querySelectorAll(".carta"),{autoAlpha:0,rotationY:-80,transformPerspective:1400,transformOrigin:"left center",stagger:.22,duration:1},"cuerpo")
-      .from(sl.querySelector(".fin"),{autoAlpha:0,y:20},"cuerpo+=1");
+    tl.from("#confirma",{autoAlpha:0,y:40},"cuerpo")
+      .from(sl.querySelectorAll(".aut"),{autoAlpha:0,x:-30,stagger:.15,duration:.6},"cuerpo+=0.3")
+      .from(sl.querySelectorAll(".carta"),{autoAlpha:0,rotationY:-80,transformPerspective:1400,transformOrigin:"left center",stagger:.22,duration:1},"cuerpo+=0.9")
+      .from(sl.querySelector(".fin"),{autoAlpha:0,y:20},"cuerpo+=1.7");
+  },
+  aportes:function(tl,sl){
+    tl.from("#apoPrin",{autoAlpha:0,y:30,scale:.97,duration:.8},"cuerpo")
+      .from(sl.querySelectorAll(".apo"),{autoAlpha:0,y:60,stagger:.18},"cuerpo+=0.5")
+      .from(sl.querySelectorAll(".apo .cifra"),{scale:.5,autoAlpha:0,transformOrigin:"left center",stagger:.18,duration:.7,ease:"back.out(1.8)"},"cuerpo+=0.7");
   },
   cierre:function(tl,sl){
     tl.from("#filo2",{scaleY:0,transformOrigin:"top",duration:1.2},"intro")
