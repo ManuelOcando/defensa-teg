@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Defensa TEG · Clasificación binaria radiológica</title>
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<style>
+/* ============ Tokens ============ */
+:root{
+  --tinta:#0B1626; --tinta2:#14294A; --papel:#F4F6FA;
+  --cian:#2E6F95; --teal:#1F5F7A; --violeta:#2C4A73; --rosa:#55657A; --coral:#8E4B3E; --oro:#B08D45; --verde:#3E6E5C;
+  --texto:#384657; --texto-osc:#C3D2E0; --tenue:#6A7A8C;
+  --grad-marca:linear-gradient(90deg,#2E6F95 0%,#2C4A73 50%,#55657A 100%);
+  --serif:'Cormorant Garamond', Garamond, Georgia, serif; --sans:'Manrope','Segoe UI',Arial,sans-serif; --mono:'Manrope','Segoe UI',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#050B14;overflow:hidden;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+#escenario{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;background:var(--tinta)}
+
+/* ============ Diapositivas ============ */
+.sl{position:absolute;inset:0;padding:150px 128px 128px;visibility:hidden;isolation:isolate;color:#F2F5FA;
+  background:linear-gradient(135deg,#F5F6F8 0%,#EFF1F4 50%,#E8EBF0 100%)}
+.sl.osc{color:#F2F5FA;background:radial-gradient(1100px 700px at 88% 6%,#16304F 0%,rgba(29,66,117,0) 60%),radial-gradient(1000px 650px at 0% 100%,#121F33 0%,rgba(59,34,117,0) 62%),var(--tinta)}
+.fondo{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.mancha{position:absolute;border-radius:50%;opacity:.5;will-change:transform}
+.osc .mancha{opacity:.32}
+canvas.red{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:-1;pointer-events:none}
+.a{position:absolute}
+
+/* tipografía */
+.ceja{display:inline-block;font:600 20px var(--mono);letter-spacing:4px;text-transform:uppercase;color:var(--teal);padding:9px 18px;border-radius:999px;background:rgba(10,157,181,.10);border:1px solid rgba(10,157,181,.25)}
+.osc .ceja{color:var(--cian);background:rgba(31,200,227,.10);border-color:rgba(31,200,227,.3)}
+.tit{font:600 74px/1.04 var(--serif);letter-spacing:-.3px;margin-top:22px;max-width:1664px;font-variant-numeric:lining-nums}
+.acento{background:linear-gradient(90deg,#1F5F7A,#2C4A73 55%,#55657A);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.osc .acento{background:linear-gradient(90deg,#2E6F95,#9DB3C9 55%,#B08D45);-webkit-background-clip:text;background-clip:text}
+svg.subraya{display:block;margin-top:22px;overflow:visible}
+.p{font-size:28px;line-height:1.45;color:var(--texto)}
+.osc .p{color:var(--texto-osc)}
+.cifra{font-family:var(--serif);font-weight:600;line-height:1;font-variant-numeric:lining-nums tabular-nums;font-feature-settings:'lnum' 1,'tnum' 1;letter-spacing:-1px}
+.grad{-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* tarjetas */
+.card{position:absolute;border-radius:20px;padding:36px;overflow:hidden;
+  background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.55));border:1px solid rgba(255,255,255,.85);
+  box-shadow:0 18px 50px rgba(52,44,130,.14),0 2px 6px rgba(52,44,130,.06)}
+.card::before{content:"";position:absolute;left:0;top:0;right:0;height:6px;background:var(--g,var(--grad-marca))}
+.card::after{content:"";position:absolute;right:-90px;bottom:-90px;width:240px;height:240px;border-radius:50%;background:var(--g,var(--grad-marca));opacity:.09}
+.card.noche{background:linear-gradient(150deg,#13284A,#1A2B44);border:1px solid rgba(255,255,255,.08);color:#F2F5FA;box-shadow:0 22px 60px rgba(20,16,70,.35)}
+.card.noche .p{color:var(--texto-osc)}
+.osc .card{background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.13);box-shadow:0 22px 60px rgba(0,0,0,.25);color:#F2F5FA}
+.card h3{font:600 40px/1.15 var(--serif);font-variant-numeric:lining-nums;font-feature-settings:'lnum' 1}
+.etq{font:600 19px var(--mono);letter-spacing:3px;text-transform:uppercase;color:var(--teal)}
+.osc .etq,.card.noche .etq{color:var(--cian)}
+
+ul.lista{list-style:none;display:flex;flex-direction:column;gap:16px}
+ul.lista li{font-size:28px;line-height:1.4;padding-left:36px;position:relative}
+ul.lista li::before{content:"";position:absolute;left:0;top:14px;width:14px;height:14px;border-radius:4px;transform:rotate(45deg)}
+ul.lista li:nth-child(5n+1)::before{background:var(--cian)} ul.lista li:nth-child(5n+2)::before{background:var(--violeta)}
+ul.lista li:nth-child(5n+3)::before{background:var(--coral)} ul.lista li:nth-child(5n+4)::before{background:var(--oro)}
+ul.lista li:nth-child(5n+5)::before{background:var(--verde)}
+
+table{border-collapse:separate;border-spacing:0 10px;width:1664px;font-size:26px}
+th{font:500 22px var(--mono);letter-spacing:2px;text-transform:uppercase;color:var(--tenue);text-align:left;padding:0 22px}
+td{background:rgba(255,255,255,.7);padding:18px 22px;vertical-align:top}
+td:first-child{border-radius:14px 0 0 14px;font-weight:600;border-left:6px solid var(--c)}
+td:last-child{border-radius:0 14px 14px 0;color:var(--coral);font-weight:500}
+
+.barra{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:24px}
+.barra i{display:block;height:100%;border-radius:4px;transform-origin:left;transform:scaleX(0)}
+#waffle{display:grid;grid-template-columns:repeat(30,7px);gap:2px}
+#waffle i{width:7px;height:7px;border-radius:2px;background:#2B4A68;display:block}
+#waffle i.err{background:var(--oro);box-shadow:0 0 10px var(--oro)}
+
+/* ============ Cromo ============ */
+#cromo{position:absolute;left:128px;right:128px;top:52px;height:44px;display:flex;align-items:center;justify-content:space-between;z-index:10;pointer-events:none}
+#marca{display:flex;align-items:center;gap:14px;font:500 20px var(--mono);letter-spacing:2px;text-transform:uppercase;color:var(--tenue)}
+#marca b{width:12px;height:12px;border-radius:50%;background:var(--grad-marca)}
+#quien{display:flex;align-items:center;gap:18px;font:500 20px var(--mono);letter-spacing:2px;text-transform:uppercase;color:var(--tenue)}
+#tramos{display:flex;gap:8px}
+#tramos span{width:64px;height:6px;border-radius:3px;background:rgba(120,130,160,.25);overflow:hidden}
+#tramos span i{display:block;height:100%;background:var(--grad-marca);transform-origin:left;transform:scaleX(0)}
+.cromo-osc #marca,.cromo-osc #quien{color:#8FA3BD}
+#numero{position:absolute;left:128px;bottom:52px;z-index:10;font:500 20px var(--mono);letter-spacing:2px;color:var(--tenue)}
+#progreso{position:absolute;left:0;bottom:0;height:5px;width:1920px;background:var(--grad-marca);transform-origin:left;transform:scaleX(0);z-index:10}
+#cortina{position:absolute;inset:0;z-index:30;visibility:hidden;background:linear-gradient(115deg,#2E6F95 0%,#2C4A73 45%,#55657A 75%,#B08D45 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;color:#fff}
+#cortina small{font:500 26px var(--mono);letter-spacing:8px;text-transform:uppercase}
+#cortina p{font-feature-settings:'lnum' 1;font:500 160px/1 var(--serif);font-style:italic;letter-spacing:-1px}
+#negro{position:absolute;inset:0;background:#000;z-index:40;visibility:hidden}
+.notas{display:none}
+#ayuda{position:fixed;right:16px;bottom:12px;font:13px var(--sans);color:#5d7083;user-select:none}
+#ayuda b{color:#8fb1c4}
+
+/* ============ Paleta sobria ============ */
+:root{--grad-marca:linear-gradient(90deg,#1F5F7A,#2E6F95);--tenue:#6B7787;--texto:#3A4553}
+.sl{background:linear-gradient(180deg,#F6F7F9 0%,#ECEFF3 100%)}
+.sl:not(.osc) .mancha{display:none}
+.osc .mancha{opacity:.16}
+.ceja{color:#1F4E6E;background:transparent;border:1px solid #9FB2C4}
+.osc .ceja{color:#C9D6E3;background:transparent;border-color:rgba(201,214,227,.35)}
+.acento,.osc .acento{background:none;-webkit-text-fill-color:currentColor}
+.acento{color:#1F5F7A}
+.osc .acento{color:#C8A660}
+.grad{background:none!important;-webkit-text-fill-color:#14304F}
+.card{background:#FFFFFF;border:1px solid #DDE2E8;box-shadow:0 10px 30px rgba(15,30,50,.07)}
+.card::before{background:#1F5F7A;height:4px}
+.card::after{display:none}
+.card.noche{background:#14263D;border:1px solid #22385A;box-shadow:0 14px 36px rgba(10,20,40,.25)}
+.card.noche::before{background:#B08D45}
+.osc .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);box-shadow:none}
+.osc .card::before{background:#B08D45}
+.etq{color:#1F5F7A}
+td{background:#FFFFFF}
+#cortina{background:#0F2236}
+#cortina small{color:#B08D45}
+#vacio{background:#14263D!important}
+#filo,#filo2{background:#B08D45!important;width:12px!important}
+#marca b{background:#B08D45}
+.osc{--cian:#8FB3CF;--rosa:#AEBBCB;--teal:#8FB3CF}
+.osc .etq{color:#8FB3CF}
+#cierre .col .etq{color:#C8A660!important}
+
+/* ============ Tema oscuro uniforme ============ */
+.osc .grad{-webkit-text-fill-color:#F2F5FA}
+.osc td{background:rgba(255,255,255,.06);color:#E6ECF3}
+.osc td:last-child{color:#D9A08F}
+.osc th{color:#8FA3BD}
+.osc ul.lista{color:var(--texto-osc)!important}
+.osc .persona{filter:brightness(1.7) saturate(.8)}
+#arcoN{stroke:#5C93B5}
+.flecha{stroke:#8FB3CF}
+#cadena,#eje{stroke:#5C93B5}
+.osc .card:not(.noche){background:linear-gradient(160deg,#16293F,#101F33)}
+.osc .card.noche{background:#0E1C2E;border:1px solid rgba(176,141,69,.35)}
+</style>
+</head>
+<body>
+<div id="escenario">
+
+<!-- ==================== 1 · PORTADA ==================== -->
+<section class="sl osc" id="portada" data-quien="1">
+  <div class="a" id="filo" style="left:0;top:0;width:20px;height:1080px;background:linear-gradient(180deg,#2E6F95,#2C4A73,#55657A)"></div>
+  <p class="a ceja" style="left:128px;top:170px">Trabajo Especial de Grado · Ingeniería en Sistemas</p>
+  <h1 class="a tit" style="left:128px;top:236px;width:1620px;font-size:90px;margin:0">Sistema de servicio para la clasificación binaria radiológica con base en algoritmos de <span class="acento">Deep Learning</span></h1>
+  <p class="a p" id="sub" style="left:128px;top:540px;font-size:34px">Una segunda lectura en segundos para priorizar radiografías de tórax</p>
+  <svg class="a ecg" style="left:128px;top:620px" width="1664" height="170" viewBox="0 0 1664 170">
+    <defs><linearGradient id="gEcg" x1="0" x2="1664" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2E6F95" stop-opacity=".6"/><stop offset=".55" stop-color="#2C4A73"/><stop offset="1" stop-color="#B08D45"/></linearGradient></defs>
+    <path d="M0 85H1664" stroke="rgba(255,255,255,.08)" stroke-width="2"/>
+    <path class="traza halo" d="M0 85H420L450 85L470 45L495 135L520 12L548 160L575 85H900L930 85L948 55L968 115L988 85H1260L1290 85L1310 45L1335 135L1360 12L1388 160L1415 85H1664" fill="none" stroke="url(#gEcg)" stroke-width="14" opacity=".25" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="traza" id="ecg1" d="M0 85H420L450 85L470 45L495 135L520 12L548 160L575 85H900L930 85L948 55L968 115L988 85H1260L1290 85L1310 45L1335 135L1360 12L1388 160L1415 85H1664" fill="none" stroke="url(#gEcg)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle class="punto" r="8" fill="#B08D45"/>
+  </svg>
+  <p class="a" id="autores" style="left:128px;top:810px;font-size:32px;line-height:1.5"><b>Chirinos · Ocando · Paris</b><br><span style="color:var(--texto-osc);font-size:26px">Tutor académico: Dr. José Oropeza<br>Tutora metodológica: Dra. María Paz</span></p>
+  <p class="a" id="casa" style="right:128px;top:810px;font-size:28px;line-height:1.5;color:var(--texto-osc);text-align:right">Universidad Privada Dr. Rafael Belloso Chacín<br>Maracaibo, 2026</p>
+  <aside class="notas">Buenos días, honorable jurado. Somos Armando Paris, Eduardo Chirinos y Manuel Ocando, y hoy presentamos nuestro trabajo especial de grado: un sistema de servicio que clasifica radiografías de tórax en normales o con hallazgo mediante aprendizaje profundo.
+En los próximos veinte minutos vamos a recorrer tres momentos. Yo les mostraré de dónde nace la necesidad y en qué conocimiento nos apoyamos. Eduardo Chirinos explicará cómo trabajamos y cómo cuidamos la calidad de los datos. Y Manuel Ocando presentará lo que obtuvimos, hasta dónde llega y hacia dónde puede crecer.</aside>
+</section>
+
+<!-- ==================== 2 · PROBLEMA ==================== -->
+<section class="sl osc" id="problema" data-quien="1">
+  <p class="ceja">El problema</p>
+  <h2 class="tit">Cada placa espera lo mismo, sea <span class="acento">urgente</span> o no</h2>
+  <div class="card c3" style="left:128px;top:420px;width:533px;--g:linear-gradient(90deg,#2E6F95,#1F5F7A)">
+    <p class="cifra grad" style="font-size:104px;background-image:linear-gradient(90deg,#1F5F7A,#2E6F95)" data-contar="2100" data-suf="+">0</p>
+    <p class="p" style="margin-top:18px">diagnósticos de enfermedades respiratorias en Venezuela al cierre de 2023 (Cáritas Venezuela)</p></div>
+  <div class="card c3" style="left:693px;top:420px;width:533px;--g:linear-gradient(90deg,#2C4A73,#55657A)">
+    <p class="cifra grad" style="font-size:104px;background-image:linear-gradient(90deg,#2C4A73,#55657A)" data-contar="220" data-suf="+">0</p>
+    <p class="p" style="margin-top:18px">casos de neumonía y otras afecciones respiratorias en el Zulia en 2024 (Convite)</p></div>
+  <div class="card noche c3" style="left:1259px;top:420px;width:533px;--g:linear-gradient(90deg,#8E4B3E,#B08D45)">
+    <p class="cifra" id="cero" style="font-size:104px;color:var(--oro)">0</p>
+    <p class="p" style="margin-top:18px">herramientas de triaje automatizado en el servicio público local de radiología</p></div>
+  <p class="a p fin" style="left:128px;top:830px;width:1664px;font-size:31px">Más demanda, menos radiólogos y equipos analógicos: la interpretación manual se volvió el cuello de botella, y la fatiga visual aumenta los falsos negativos.</p>
+  <aside class="notas">Empecemos por lo que vimos en Maracaibo. En el servicio público de radiología hay una desproporción clara: crece la cantidad de pacientes que necesitan una radiografía y disminuye la cantidad de radiólogos disponibles para leerlas. A eso se suma que buena parte de los equipos todavía son analógicos y que no existe ninguna herramienta que ordene las placas por urgencia.
+¿Qué significa eso en la práctica? Que una placa normal y una con neumonía esperan exactamente lo mismo en la cola, a veces días. Mientras tanto, una patología tratable puede volverse crítica, y el especialista, cansado tras horas de lectura, pierde sensibilidad ante hallazgos sutiles; así aparecen los falsos negativos: pacientes enfermos que vuelven a casa como sanos.
+Las cifras muestran que no es un problema menor: Cáritas Venezuela registró más de dos mil cien diagnósticos respiratorios al cierre de 2023, y Convite reportó en el Zulia, solo en 2024, cien neumonías y más de ciento veinte afecciones respiratorias adicionales.
+Esta tecnología ya existe en el mundo: Qure.ai, Entelai en Argentina e incluso Koios en un centro privado de Maracaibo. Pero no ha llegado al sistema público, y ninguna de esas soluciones está pensada para centros sin servidores propios ni aceleración gráfica. Ese es el espacio que este trabajo busca atender.</aside>
+</section>
+
+<!-- ==================== 3 · BRECHA ==================== -->
+<section class="sl osc" id="brecha" data-quien="1">
+  <p class="ceja">Antecedentes</p>
+  <h2 class="tit">Cada antecedente resolvió una pieza; <span class="acento">ninguno las unió</span></h2>
+  <table class="a" style="left:128px;top:400px">
+    <tr class="fila"><th style="width:31%">Antecedente</th><th style="width:39%">Lo que aporta</th><th style="width:30%">Lo que faltaba</th></tr>
+    <tr class="fila" style="--c:var(--cian)"><td>Lubinus y otros (2021)</td><td>Potencial de las CNN en imágenes diagnósticas</td><td>Revisión teórica, sin sistema</td></tr>
+    <tr class="fila" style="--c:var(--violeta)"><td>Andrade (2021); Martín de Diego (2022)</td><td>Clasificadores binarios con redes convolucionales</td><td>Modelo aislado, sin servicio usable</td></tr>
+    <tr class="fila" style="--c:var(--rosa)"><td>Vidaurre (2023)</td><td>Software como servicio en la nube</td><td>Fuera del ámbito médico</td></tr>
+    <tr class="fila" style="--c:var(--oro)"><td>Hernández (2023)</td><td>Sistema de soporte a decisiones</td><td>Fuera del ámbito médico</td></tr>
+  </table>
+  <div class="a" id="vacio" style="left:128px;top:800px;width:1664px;padding:30px 36px;border-radius:18px;background:linear-gradient(110deg,#0B1626,#1A2B44);color:#F2F5FA;font-size:31px;line-height:1.45;box-shadow:0 18px 50px rgba(20,16,70,.3)"><b id="vacioEtq" style="color:var(--oro)">El vacío:</b> clasificar, explicar visualmente el resultado y ofrecerlo desde cualquier navegador, en una sola herramienta.</div>
+  <aside class="notas">Antes de construir revisamos qué se había hecho. Lubinus y su equipo, en 2021, mostraron el potencial de las redes convolucionales en imágenes diagnósticas, pero desde la revisión teórica. Andrade, en 2021, y Martín de Diego, en 2022, llevaron esa idea a la práctica con clasificadores binarios, aunque se quedaron en el modelo: no lo convirtieron en algo que un médico pudiera usar. Vidaurre, en 2023, demostró las ventajas del software como servicio, y Hernández, también en 2023, el valor de un sistema de soporte a decisiones, ambos fuera del ámbito de la salud.
+Cada uno resolvió una pieza. Lo que no encontramos fue una herramienta que reuniera las tres cosas que necesita un servicio de radiología: que clasifique, que muestre en qué se basó para clasificar y que funcione desde un navegador sin instalar nada.
+De ahí nace la contribución de este trabajo: no un modelo más, sino un servicio completo, explicable y verificable, pensado para la realidad de los centros públicos de nuestra región.</aside>
+</section>
+
+<!-- ==================== 4 · FORMULACIÓN DEL PROBLEMA ==================== -->
+<section class="sl osc" id="pregunta" data-quien="1">
+  <p class="a" id="signo" aria-hidden="true" style="right:70px;top:200px;font:italic 600 760px/1 var(--serif);color:#B08D45;opacity:.10;pointer-events:none">?</p>
+  <p class="ceja">Formulación del problema</p>
+  <h2 class="tit" style="font-size:66px;line-height:1.16;font-style:italic;font-weight:500;max-width:1560px">¿De qué manera el desarrollo de un sistema de servicio basado en algoritmos de Deep Learning permitirá <span class="acento">optimizar la clasificación binaria</span> de radiografías de tórax para <span class="acento">agilizar el diagnóstico</span> <span style="white-space:nowrap"><span class="acento">médico</span>?</span></h2>
+  <div class="a" id="clavesP" style="left:128px;top:660px;display:flex;gap:22px">
+    <div class="card clave" style="position:relative;padding:22px 30px"><p class="etq">Medio</p><p style="font-size:27px;margin-top:6px">Sistema de servicio con Deep Learning</p></div>
+    <div class="card clave" style="position:relative;padding:22px 30px"><p class="etq">Propósito</p><p style="font-size:27px;margin-top:6px">Clasificación binaria de radiografías</p></div>
+    <div class="card noche clave" style="position:relative;padding:22px 30px"><p class="etq" style="color:var(--oro)">Fin</p><p style="font-size:27px;margin-top:6px">Agilizar el diagnóstico médico</p></div>
+  </div>
+  <aside class="notas">Todo lo anterior nos llevó a plantear una pregunta concreta, que es la formulación del problema de esta investigación: ¿De qué manera el desarrollo de un sistema de servicio basado en algoritmos de Deep Learning permitirá optimizar la clasificación binaria de radiografías de tórax para agilizar el diagnóstico médico?
+La pregunta tiene tres partes. El medio es el sistema de servicio con aprendizaje profundo; el propósito, clasificar radiografías de tórax en dos categorías; y el fin, que el médico llegue antes al diagnóstico, atendiendo primero los casos que lo necesitan.
+Para responderla nos trazamos los objetivos que vienen a continuación.</aside>
+</section>
+
+<!-- ==================== 5 · OBJETIVOS ==================== -->
+<section class="sl osc" id="objetivos" data-quien="1">
+  <p class="ceja">Objetivos</p>
+  <h2 class="tit">Un objetivo general, seis <span class="acento">pasos encadenados</span></h2>
+  <div class="card noche a" id="objGen" style="left:128px;top:345px;width:1664px;padding:26px 36px;display:flex;align-items:center;gap:40px"><p class="etq" style="color:var(--oro);flex:0 0 240px;line-height:1.4">Objetivo<br>general</p><p style="font:500 38px/1.25 var(--serif);font-feature-settings:'lnum' 1">Desarrollar un sistema de servicio para la clasificación binaria radiológica con base en algoritmos de deep learning.</p></div>
+  <svg class="a" style="left:128px;top:545px" width="1664" height="400"><path id="cadena" d="M266 85H1398V290H266" fill="none" stroke="url(#gCad)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <defs><linearGradient id="gCad" x1="0" x2="1664" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2E6F95"/><stop offset=".5" stop-color="#2C4A73"/><stop offset="1" stop-color="#55657A"/></linearGradient></defs></svg>
+  <p class="a etq" id="objEsp" style="left:128px;top:503px">Objetivos específicos</p>
+  <div class="card obj" style="left:128px;top:545px;width:533px;padding:24px 34px;--g:linear-gradient(90deg,#2E6F95,#1F5F7A)"><p class="etq">Paso 01</p><p style="font-size:29px;margin-top:8px">Analizar cómo se clasifica hoy</p></div>
+  <div class="card obj" style="left:693px;top:545px;width:533px;padding:24px 34px;--g:linear-gradient(90deg,#3E6E5C,#2E6F95)"><p class="etq">Paso 02</p><p style="font-size:29px;margin-top:8px">Determinar los requerimientos funcionales</p></div>
+  <div class="card obj" style="left:1259px;top:545px;width:533px;padding:24px 34px;--g:linear-gradient(90deg,#2C4A73,#2E6F95)"><p class="etq">Paso 03</p><p style="font-size:29px;margin-top:8px">Diseñar lógicamente el sistema</p></div>
+  <div class="card obj" style="left:1259px;top:750px;width:533px;padding:24px 34px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">Paso 04</p><p style="font-size:29px;margin-top:8px">Construirlo a partir del diseño</p></div>
+  <div class="card obj" style="left:693px;top:750px;width:533px;padding:24px 34px;--g:linear-gradient(90deg,#55657A,#8E4B3E)"><p class="etq">Paso 05</p><p style="font-size:29px;margin-top:8px">Demostrar su funcionalidad con pruebas</p></div>
+  <div class="card noche obj" style="left:128px;top:750px;width:533px;padding:24px 34px;--g:linear-gradient(90deg,#8E4B3E,#B08D45)"><p class="etq" style="color:var(--oro)">Paso 06</p><p style="font-size:29px;margin-top:8px">Elaborar el manual de usuario</p></div>
+  <aside class="notas">Con ese vacío claro, el objetivo general fue desarrollar un sistema de servicio para la clasificación binaria radiológica con base en algoritmos de deep learning.
+Para llegar ahí nos trazamos seis objetivos específicos que funcionan como una cadena: primero analizar cómo se clasifica hoy, escuchando a los radiólogos; con lo que dijeron, determinar qué debía hacer el sistema; con esos requerimientos, diseñarlo; luego construirlo, demostrar con pruebas que funciona y, por último, dejar un manual para que cualquiera pueda usarlo.
+Ninguno de los seis queda suelto: cada uno produce lo que necesita el siguiente, y todos juntos responden a la pregunta que acabamos de plantear.
+Su importancia es triple: en lo práctico, ofrece un mecanismo de triaje digital; en lo teórico, integra aprendizaje profundo con arquitectura de software; y en lo metodológico, deja un proceso documentado y replicable.</aside>
+</section>
+
+<!-- ==================== 5 · TEORÍA ==================== -->
+<section class="sl osc" id="teoria" data-quien="1">
+  <p class="ceja">Bases teóricas</p>
+  <h2 class="tit"><span class="acento">Cuatro pilares,</span> cada uno con dos autores desde 2021</h2>
+  <div class="card izq" style="left:128px;top:410px;width:816px;--g:linear-gradient(90deg,#2E6F95,#1F5F7A)"><p class="etq">Pilar 1</p><h3 style="margin-top:8px">Aprendizaje profundo</h3><p class="p" style="font-size:26px;margin-top:8px">Prince (2023) · Zhang, Lipton, Li y Smola (2023)</p></div>
+  <div class="card der" style="left:976px;top:410px;width:816px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">Pilar 2</p><h3 style="margin-top:8px">Software como servicio</h3><p class="p" style="font-size:26px;margin-top:8px">Kamlofsky (2022) · IBM (2024)</p></div>
+  <div class="card izq" style="left:128px;top:630px;width:816px;--g:linear-gradient(90deg,#8E4B3E,#B08D45)"><p class="etq">Pilar 3</p><h3 style="margin-top:8px">Clasificación normal / anormal</h3><p class="p" style="font-size:26px;margin-top:8px">Çallı y otros (2021) · Ait Nasser y Akhloufi (2023)</p></div>
+  <div class="card der" style="left:976px;top:630px;width:816px;--g:linear-gradient(90deg,#3E6E5C,#2E6F95)"><p class="etq">Pilar 4</p><h3 style="margin-top:8px">Explicabilidad y evaluación</h3><p class="p" style="font-size:26px;margin-top:8px">Muhammad y Bendechache (2024) · Nahm (2022)</p></div>
+  <p class="a p fin" style="left:128px;top:870px;width:1664px;font-size:30px">Variables: <b style="color:#F2F5FA">sistema de servicio</b> y <b style="color:#F2F5FA">clasificación binaria radiológica</b>.</p>
+  <aside class="notas">Para sostener todo esto nos apoyamos en cuatro pilares teóricos, y en cada concepto buscamos al menos dos autores de 2021 en adelante, para trabajar con conocimiento vigente.
+El primero es el aprendizaje profundo: Prince, en 2023, y Zhang, Lipton, Li y Smola, también en 2023, explican cómo las redes convolucionales aprenden patrones directamente de las imágenes. El segundo es el software como servicio: Kamlofsky, en 2022, e IBM, en 2024, lo describen como un software que se usa a través de internet sin instalarlo; eso era indispensable, porque los centros no tienen equipos especializados.
+El tercero es la clasificación normal o anormal: Çallı y su equipo, en 2021, y Ait Nasser y Akhloufi, en 2023, la presentan precisamente como una forma de priorizar casos urgentes y apoyar la decisión del radiólogo, no de sustituirla. Y el cuarto es la explicabilidad y la evaluación: Muhammad y Bendechache, en 2024, muestran por qué un médico no confía en una caja negra, y Nahm, en 2022, cómo leer la curva ROC.
+De estos pilares salen nuestras dos variables: el sistema de servicio, que entendimos como una arquitectura que entrega una función a través de internet, y la clasificación binaria radiológica, que es asignar cada radiografía a una de dos categorías excluyentes. Con eso, le cedo la palabra a Eduardo Chirinos, que les explicará cómo lo hicimos.</aside>
+</section>
+
+<!-- ==================== 6 · TIPO ==================== -->
+<section class="sl osc" id="tipo" data-quien="2">
+  <p class="ceja">Tipo y diseño</p>
+  <h2 class="tit">Una propuesta que nace de un <span class="acento">diagnóstico</span></h2>
+  <div class="card c3" style="left:128px;top:410px;width:533px;--g:linear-gradient(90deg,#2E6F95,#2C4A73)"><p class="etq">Tipo</p><h3 style="font-size:42px;margin:14px 0">Proyectiva</h3><p class="p" style="font-size:26px">Propuesta de solución a partir de un diagnóstico previo (Bernal, 2022)</p></div>
+  <div class="card c3" style="left:693px;top:410px;width:533px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">Diseño</p><h3 style="font-size:42px;margin:14px 0">No experimental, transversal</h3><p class="p" style="font-size:26px">Radiografías tal como fueron captadas, en un solo momento</p></div>
+  <div class="card c3" id="criterio" style="left:1259px;top:410px;width:533px;border:2px solid var(--oro);--g:linear-gradient(90deg,#8E4B3E,#B08D45)"><p class="etq" style="color:var(--oro)">Criterio fijado</p><h3 style="font-size:42px;margin:14px 0;color:var(--oro)">Sensibilidad ≥ 95 %</h3><p class="p" style="font-size:26px">Criterio experimental de aceptación del modelo</p></div>
+  <p class="a p fin" style="left:128px;top:850px;width:1664px;font-size:30px">Se combinan la voz de los especialistas, recogida en entrevistas, y la medición numérica del modelo.</p>
+  <aside class="notas">Gracias. La investigación es de tipo proyectiva: como señala Bernal en 2022, consiste en elaborar una propuesta de solución a un problema práctico a partir de un diagnóstico previo. Eso es exactamente lo que hicimos: primero entendimos el proceso actual y después construimos la respuesta.
+El diseño es no experimental y transversal. No manipulamos ninguna variable: trabajamos con radiografías tal como fueron captadas por los equipos médicos y las analizamos en un solo momento.
+Al ser una investigación proyectiva, no partimos de una hipótesis que contrastar. En su lugar, fijamos un criterio experimental de aceptación: el sistema solo sería válido si detectaba al menos el noventa y cinco por ciento de las radiografías con hallazgo. Elegimos la sensibilidad porque el error más costoso es dejar pasar a un paciente enfermo.
+Por la naturaleza del problema, combinamos dos tipos de información: la experiencia de los especialistas, recogida en entrevistas, y la medición numérica del desempeño del modelo. Ninguna de las dos bastaba por sí sola.</aside>
+</section>
+
+<!-- ==================== 7 · FASES ==================== -->
+<section class="sl osc" id="fases" data-quien="2">
+  <p class="ceja">Metodología</p>
+  <h2 class="tit"><span class="acento">Ocho fases,</span> cinco referentes</h2>
+  <svg class="a" style="left:128px;top:378px" width="1664" height="20"><line id="eje" x1="10" y1="10" x2="1654" y2="10" stroke="url(#gEje)" stroke-width="4" stroke-linecap="round"/>
+    <defs><linearGradient id="gEje" x1="0" x2="1664" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2E6F95"/><stop offset=".5" stop-color="#2C4A73"/><stop offset="1" stop-color="#B08D45"/></linearGradient></defs></svg>
+  <div class="card fase" style="left:128px;top:420px;width:401px;padding:28px;--g:linear-gradient(90deg,#2E6F95,#1F5F7A)"><p class="etq">I · Senn (1992)</p><p style="font-size:28px;margin-top:10px">Investigación preliminar</p></div>
+  <div class="card fase" style="left:549px;top:420px;width:401px;padding:28px;--g:linear-gradient(90deg,#3E6E5C,#2E6F95)"><p class="etq">II · CRISP-DM</p><p style="font-size:28px;margin-top:10px">Comprensión del negocio</p></div>
+  <div class="card fase" style="left:970px;top:420px;width:401px;padding:28px;--g:linear-gradient(90deg,#2C4A73,#2E6F95)"><p class="etq">III · CRISP-DM</p><p style="font-size:28px;margin-top:10px">Comprensión de los datos</p></div>
+  <div class="card fase" style="left:1391px;top:420px;width:401px;padding:28px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">IV · CRISP-DM</p><p style="font-size:28px;margin-top:10px">Modelado</p></div>
+  <div class="card fase" style="left:128px;top:615px;width:401px;padding:28px;--g:linear-gradient(90deg,#55657A,#8E4B3E)"><p class="etq">V · Beck (1999)</p><p style="font-size:28px;margin-top:10px">Codificación (XP)</p></div>
+  <div class="card fase" style="left:549px;top:615px;width:401px;padding:28px;--g:linear-gradient(90deg,#8E4B3E,#B08D45)"><p class="etq">VI · CRISP-DM</p><p style="font-size:28px;margin-top:10px">Evaluación</p></div>
+  <div class="card fase" style="left:970px;top:615px;width:401px;padding:28px;--g:linear-gradient(90deg,#B08D45,#3E6E5C)"><p class="etq">VII · Rook (1986)</p><p style="font-size:28px;margin-top:10px">Validación (Modelo en V)</p></div>
+  <div class="card noche fase" style="left:1391px;top:615px;width:401px;padding:28px;--g:linear-gradient(90deg,#2E6F95,#2C4A73)"><p class="etq" style="color:var(--oro)">VIII · Kendall y Kendall</p><p style="font-size:28px;margin-top:10px">Documentación</p></div>
+  <p class="a p fin" style="left:128px;top:840px;width:1664px;font-size:30px">CRISP-DM según Chapman y otros (2000). Ninguna metodología por sí sola cubría diagnóstico, datos, software, pruebas y manuales.</p>
+  <aside class="notas">Para el procedimiento armamos una metodología híbrida de ocho fases. La razón es sencilla: ninguna metodología por sí sola cubría todo lo que el proyecto exigía, que iba desde entrevistar especialistas hasta entrenar un modelo, programar un servicio, probarlo y documentarlo.
+La primera fase sigue a Senn, de 1992, para la investigación preliminar. Las fases dos, tres, cuatro y seis siguen el estándar CRISP-DM, descrito por Chapman y su equipo en el año 2000, que es el referente para proyectos de minería de datos: comprender el negocio, comprender los datos, modelar y evaluar. La quinta, la codificación, aplica la programación extrema de Beck, de 1999, con entregas cortas e integración continua. La séptima usa el Modelo en V de Rook, de 1986, donde cada nivel de especificación tiene su propio nivel de prueba. Y la octava sigue a Kendall y Kendall para la documentación.
+Cada fase está atada a uno de los seis objetivos, de modo que el avance de la metodología es, al mismo tiempo, el avance de los objetivos.</aside>
+</section>
+
+<!-- ==================== 8 · DATOS ==================== -->
+<section class="sl osc" id="datos" data-quien="2">
+  <p class="ceja">Población y técnicas</p>
+  <h2 class="tit">Dos fuentes: <span class="acento">personas e imágenes</span></h2>
+  <div class="card izq" style="left:128px;top:400px;width:816px;height:480px;--g:linear-gradient(90deg,#2E6F95,#2C4A73)">
+    <p class="etq">Informantes</p>
+    <div style="display:flex;gap:20px;margin:26px 0 22px">
+      <svg class="persona" width="92" height="112" viewBox="0 0 90 110"><circle cx="45" cy="28" r="22" fill="#1F5F7A"/><path d="M5 108c0-26 18-42 40-42s40 16 40 42z" fill="#1F5F7A"/></svg>
+      <svg class="persona" width="92" height="112" viewBox="0 0 90 110"><circle cx="45" cy="28" r="22" fill="#2C4A73"/><path d="M5 108c0-26 18-42 40-42s40 16 40 42z" fill="#2C4A73"/></svg>
+      <svg class="persona" width="92" height="112" viewBox="0 0 90 110"><circle cx="45" cy="28" r="22" fill="#55657A"/><path d="M5 108c0-26 18-42 40-42s40 16 40 42z" fill="#55657A"/></svg>
+      <svg class="persona" width="92" height="112" viewBox="0 0 90 110"><circle cx="45" cy="28" r="22" fill="#B08D45"/><path d="M5 108c0-26 18-42 40-42s40 16 40 42z" fill="#B08D45"/></svg>
+    </div>
+    <p class="p">3 médicos radiólogos y 1 ingeniero en informática; población pequeña, estudiada completa</p>
+    <p class="p" style="font-size:26px;margin-top:14px"><b style="color:#F2F5FA">Técnica:</b> entrevista semiestructurada con guía de entrevista</p>
+  </div>
+  <div class="card der" style="left:976px;top:400px;width:816px;height:480px;--g:linear-gradient(90deg,#B08D45,#1F5F7A)">
+    <p class="etq">Radiografías de tórax</p>
+    <div style="display:flex;align-items:center;gap:40px;margin:18px 0">
+      <svg width="230" height="230" viewBox="0 0 230 230">
+        <circle cx="115" cy="115" r="92" fill="none" stroke="rgba(120,130,160,.18)" stroke-width="30"/>
+        <circle id="arcoA" cx="115" cy="115" r="92" fill="none" stroke="#B08D45" stroke-width="30" transform="rotate(-90 115 115)"/>
+        <circle id="arcoN" cx="115" cy="115" r="92" fill="none" stroke="#1F5F7A" stroke-width="30" transform="rotate(-90 115 115)"/>
+      </svg>
+      <div>
+        <p class="cifra grad" style="font-size:96px;background-image:linear-gradient(90deg,#1F5F7A,#2C4A73)" data-contar="9010">0</p>
+        <p class="p" style="font-size:26px;margin-top:12px"><span style="color:#C8A660;font-weight:600">4.273 con hallazgo</span><br><span style="color:var(--teal);font-weight:600">4.737 normales</span></p>
+      </div>
+    </div>
+    <p class="p" style="font-size:26px">900 reservadas solo para la prueba final · <b style="color:#F2F5FA">Técnica:</b> revisión documental de un conjunto público</p>
+  </div>
+  <aside class="notas">Trabajamos con dos fuentes de información. La primera, las personas: tres médicos radiólogos y un ingeniero en informática. Al ser una población pequeña y accesible, la estudiamos completa, sin necesidad de muestreo; los elegimos porque conocen de primera mano el proceso que queríamos mejorar y el tipo de servicio que queríamos construir.
+Con ellos aplicamos entrevistas semiestructuradas, con una guía de preguntas que derivamos directamente de las actividades de cada fase; así, cada respuesta alimentaba un entregable concreto. Como las tres entrevistas coincidieron en los puntos centrales, como la falta de equipos especializados, la necesidad de explicar visualmente el resultado y la responsabilidad del médico, esa coincidencia nos dio confianza en lo recogido.
+La segunda fuente, las imágenes: nueve mil diez radiografías de tórax de un conjunto público, cuatro mil doscientas setenta y tres con hallazgo y cuatro mil setecientas treinta y siete normales, una distribución bastante equilibrada. De ellas, novecientas se reservaron exclusivamente para la prueba final; el modelo nunca las vio durante el entrenamiento. Aquí la técnica fue la revisión documental.</aside>
+</section>
+
+<!-- ==================== 9 · INDEPENDENCIA ==================== -->
+<section class="sl osc" id="independencia" data-quien="2">
+  <p class="ceja">Calidad de los datos</p>
+  <h2 class="tit">Antes de medir, comprobamos que la prueba fuera <span class="acento">independiente</span></h2>
+  <div class="card paso" style="left:128px;top:450px;width:480px;--g:linear-gradient(90deg,#2E6F95,#1F5F7A)"><p class="etq">Paso 1</p><h3 style="margin:10px 0">Huella MD5</h3><p class="p" style="font-size:26px">Sin coincidencias, pero insuficiente: la plataforma redimensiona las imágenes</p></div>
+  <svg class="a" style="left:618px;top:585px" width="92" height="40" viewBox="0 0 92 40"><path class="flecha" d="M4 20H78M60 5L80 20L60 35" fill="none" stroke="#2C4A73" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="card paso" style="left:720px;top:450px;width:480px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">Paso 2</p><h3 style="margin:10px 0">Huella perceptual</h3><p class="p" style="font-size:26px">256 bits que resisten cambios de tamaño y compresión</p></div>
+  <svg class="a" style="left:1210px;top:585px" width="92" height="40" viewBox="0 0 92 40"><path class="flecha" d="M4 20H78M60 5L80 20L60 35" fill="none" stroke="#55657A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="card noche paso" style="left:1312px;top:450px;width:480px;display:flex;gap:22px;align-items:center;--g:linear-gradient(90deg,#8E4B3E,#B08D45)">
+    <svg width="150" height="150" viewBox="0 0 150 150" style="flex:none"><circle cx="75" cy="75" r="62" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="16"/><circle id="anillo" cx="75" cy="75" r="62" fill="none" stroke="#B08D45" stroke-width="16" stroke-linecap="round" transform="rotate(-90 75 75)"/></svg>
+    <div><p class="etq" style="color:var(--cian)">Hallazgo</p><p class="cifra" style="font-size:66px;color:var(--oro);margin:8px 0" data-contar="73" data-suf=" %">0</p><p class="p" style="font-size:24px">repetido con el entrenamiento: descartado como prueba externa</p></div>
+  </div>
+  <p class="a p fin" style="left:128px;top:850px;width:1664px;font-size:30px">La partición de 900 imágenes resultó genuinamente independiente: sus métricas son válidas.</p>
+  <aside class="notas">Este fue el momento más delicado de la recolección, y queremos detenernos en él. Un modelo puede aparentar un desempeño excelente si se evalúa con imágenes que ya vio durante el entrenamiento. Por eso, antes de medir nada, verificamos que la prueba fuera independiente.
+Primero comparamos las huellas criptográficas MD5 de todas las imágenes y no encontramos coincidencias. Pero nos dimos cuenta de que eso no bastaba: la plataforma de origen redimensiona y recomprime las imágenes, así que una misma radiografía produce huellas distintas en cada carpeta.
+Pasamos entonces a una huella perceptual, que resume el contenido visual de cada imagen en doscientos cincuenta y seis bits y resiste esos cambios. El resultado fue doble. La partición de prueba de novecientas imágenes resultó genuinamente independiente. Pero el conjunto complementario que la fuente llamaba “de evaluación” compartía el setenta y tres por ciento de su contenido con el entrenamiento.
+Decidimos no usarlo como prueba externa. Habríamos podido reportar cifras más llamativas, pero habrían sido engañosas. Preferimos resultados menos vistosos y verdaderos; este control es la base de la validez de todo lo que presentará mi compañero.</aside>
+</section>
+
+<!-- ==================== 10 · MEDICIÓN ==================== -->
+<section class="sl osc" id="medicion" data-quien="2">
+  <p class="ceja">Análisis y ética</p>
+  <h2 class="tit">Medimos lo que importa al médico, con <span class="acento">límites claros</span></h2>
+  <div class="card izq" style="left:128px;top:420px;width:800px;--g:linear-gradient(90deg,#2E6F95,#2C4A73)">
+    <p class="etq">Cómo se analizó</p>
+    <ul class="lista" style="margin-top:24px">
+      <li>Clase positiva: radiografía con hallazgo</li>
+      <li>Sensibilidad, especificidad y matriz de confusión</li>
+      <li>Curva ROC y área bajo la curva</li>
+      <li>Calibración de la confianza</li>
+      <li>Tres escalas comparadas: nano, medium y xlarge</li>
+    </ul>
+  </div>
+  <div class="card noche der" style="left:992px;top:420px;width:800px;--g:linear-gradient(90deg,#8E4B3E,#B08D45)">
+    <p class="etq" style="color:var(--oro)">Resguardos éticos</p>
+    <ul class="lista" style="margin-top:24px;color:var(--texto-osc)">
+      <li>Imágenes públicas, sin datos identificables</li>
+      <li>Aviso permanente: no es un dispositivo médico</li>
+      <li>La decisión y la firma siguen siendo del radiólogo</li>
+      <li>Servicio protegido contra el uso abusivo</li>
+    </ul>
+  </div>
+  <aside class="notas">Con datos confiables, definimos cómo analizarlos. Tomamos como clase positiva la radiografía con hallazgo y priorizamos la sensibilidad, porque en triaje el peor error es un falso negativo. La acompañamos con la especificidad, la matriz de confusión y la curva ROC con su área bajo la curva, que mide la capacidad de separar ambas clases sin depender de un umbral.
+Agregamos además la calibración. Como el sistema le muestra al médico un porcentaje de confianza, ese número tiene que ser honesto. Y no nos quedamos con un solo modelo: comparamos tres escalas de la misma arquitectura para justificar con datos cuál desplegar.
+En lo ético, trabajamos con imágenes públicas sin datos que permitan identificar a ningún paciente. Los propios radiólogos nos marcaron el límite: la responsabilidad diagnóstica es indelegable, así que la interfaz muestra de forma permanente que no se trata de un dispositivo médico y que la decisión final es del especialista. Además, protegimos el servicio para que nadie pudiera usarlo de forma abusiva.
+Con esto le cedo la palabra a Manuel Ocando, que les mostrará los resultados.</aside>
+</section>
+
+<!-- ==================== 11 · RESULTADOS ==================== -->
+<section class="sl osc" id="resultados" data-quien="3">
+  <p class="ceja">Resultados</p>
+  <h2 class="tit">YOLO11m-cls sobre 900 radiografías <span class="acento">nunca vistas</span></h2>
+  <div class="card met" style="left:128px;top:400px;width:398px;padding:32px;--g:linear-gradient(90deg,#8E4B3E,#B08D45)"><p class="cifra" style="font-size:74px;color:var(--oro)" data-contar="98.10" data-dec="2" data-suf=" %">0</p><p class="p" style="font-size:25px;margin-top:12px">Sensibilidad (meta: 95 %)</p><div class="barra"><i data-v="0.981" style="background:linear-gradient(90deg,#8E4B3E,#B08D45)"></i></div></div>
+  <div class="card met" style="left:550px;top:400px;width:398px;padding:32px;--g:linear-gradient(90deg,#2E6F95,#2C4A73)"><p class="cifra" style="font-size:74px" data-contar="99.58" data-dec="2" data-suf=" %">0</p><p class="p" style="font-size:25px;margin-top:12px">Especificidad</p><div class="barra"><i data-v="0.9958" style="background:linear-gradient(90deg,#2E6F95,#2C4A73)"></i></div></div>
+  <div class="card met" style="left:972px;top:400px;width:398px;padding:32px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="cifra" style="font-size:74px" data-contar="98.89" data-dec="2" data-suf=" %">0</p><p class="p" style="font-size:25px;margin-top:12px">Exactitud</p><div class="barra"><i data-v="0.9889" style="background:linear-gradient(90deg,#2C4A73,#55657A)"></i></div></div>
+  <div class="card met" style="left:1394px;top:400px;width:398px;padding:32px;--g:linear-gradient(90deg,#3E6E5C,#2E6F95)"><p class="cifra" style="font-size:74px;color:var(--cian)" data-contar="0.003" data-desde="0.5" data-dec="3">0</p><p class="p" style="font-size:25px;margin-top:12px">Error de calibración</p><div class="barra"><i data-v="0.997" style="background:linear-gradient(90deg,#3E6E5C,#2E6F95)"></i></div></div>
+  <div class="a" id="waffle" style="left:128px;top:680px"></div>
+  <p class="a p rmsg" style="left:440px;top:690px;width:640px;font-size:30px"><b style="color:#F2F5FA">10 errores en 900</b>, ninguno con confianza superior a 0,99: bajo ese umbral el sistema pide revisión humana.</p>
+  <p class="a p rmsg" style="left:1150px;top:690px;width:642px;font-size:30px"><b style="color:#F2F5FA">xlarge</b> acertó una imagen más, siendo 2,7 veces más pesado: se eligió <b style="color:#F2F5FA">medium</b>.</p>
+  <aside class="notas">Gracias. Sobre esas novecientas radiografías que el modelo nunca vio, la variante seleccionada, YOLO11 medium de clasificación, alcanzó una sensibilidad de noventa y ocho coma diez por ciento, por encima del noventa y cinco que nos habíamos fijado como criterio. La especificidad fue de noventa y nueve coma cincuenta y ocho, y la exactitud global de noventa y ocho coma ochenta y nueve.
+Pero el dato que más nos interesa es otro. De las novecientas imágenes, el modelo se equivocó en diez, y en ninguno de esos diez casos su confianza superó el noventa y nueve por ciento. Eso nos permitió convertir un número en una regla útil: cuando la confianza queda por debajo de ese umbral, el sistema le avisa al médico que ese estudio requiere revisión humana. Y como el error de calibración fue de apenas cero coma cero cero tres, ese porcentaje de confianza se puede leer como lo que dice.
+También quisimos justificar la elección del modelo. La versión más grande, xlarge, acertó una sola imagen más entre novecientas, siendo dos coma siete veces más pesada y más lenta. Esa diferencia no es significativa, así que optamos por la versión medium, que equilibra precisión, tamaño y tiempo de respuesta.</aside>
+</section>
+
+<!-- ==================== 12 · SISTEMA ==================== -->
+<section class="sl osc" id="sistema" data-quien="3">
+  <div style="width:780px">
+    <p class="ceja">El sistema</p>
+    <h2 class="tit" style="font-size:70px">Del navegador al resultado, <span class="acento">sin instalar nada</span></h2>
+  </div>
+  <div class="a" id="marco" style="left:972px;top:150px;width:820px;height:676px;border-radius:20px;overflow:hidden;background:var(--tinta);box-shadow:0 30px 80px rgba(30,20,90,.35)">
+    <img src="img/informe.png" alt="Informe del sistema con los pasos numerados" style="width:100%;height:100%;object-fit:contain">
+    <div id="escaner" style="position:absolute;left:0;right:0;top:0;height:110px;background:linear-gradient(180deg,rgba(31,200,227,0),rgba(31,200,227,.28),rgba(123,97,255,0));border-bottom:2px solid rgba(31,200,227,.85)"></div>
+  </div>
+  <ul class="a lista" style="left:128px;top:520px;width:780px;color:var(--texto)">
+    <li>Tres capas: navegador, intermediario y servicio de inferencia en la nube</li>
+    <li>Grad-CAM corregido: el mapa corresponde a la clase predicha</li>
+    <li>Filtro que rechaza imágenes que no son radiografías</li>
+    <li><b style="color:#F2F5FA" data-contar="117">0</b> pruebas automáticas: 58 unitarias, 14 de integración y 45 de aceptación</li>
+  </ul>
+  <aside class="notas">Todo esto se materializa en un servicio web que ya está en funcionamiento. El médico abre la dirección en cualquier navegador, carga la radiografía y, en alrededor de un segundo, recibe el informe que ven aquí: el resultado con su confianza, el visor con la imagen original y el mapa de atención, y los tiempos de cada etapa.
+Por dentro tiene tres capas: la interfaz en el navegador, un intermediario que protege la dirección del servicio, y el servicio de inferencia en la nube. Así, un centro sin servidores ni tarjetas gráficas puede usarlo con una simple conexión a internet, que era justo lo que pidieron los radiólogos.
+En el camino encontramos y corregimos defectos del proyecto que tomamos como base. El mapa de atención no correspondía realmente a la clase predicha, y el explicador recibía la imagen con un preprocesamiento distinto al del clasificador. Los corregimos y verificamos la corrección de forma cuantitativa. También añadimos un filtro que rechaza imágenes que no son radiografías, para que el sistema no emita un resultado sin sentido.
+Para garantizar que todo siga funcionando, cada cambio en el código ejecuta automáticamente ciento diecisiete pruebas: cincuenta y ocho unitarias, catorce de integración y cuarenta y cinco de aceptación, siguiendo el Modelo en V.</aside>
+</section>
+
+<!-- ==================== 13 · ALCANCE ==================== -->
+<section class="sl osc" id="alcance" data-quien="3">
+  <p class="ceja">Discusión y alcance</p>
+  <h2 class="tit">Lo que confirma, lo que sorprendió y <span class="acento">hasta dónde llega</span></h2>
+  <div class="card carta" style="left:128px;top:450px;width:533px;--g:linear-gradient(90deg,#2E6F95,#3E6E5C)"><p class="etq">Confirma</p><p class="p" style="font-size:26px;margin-top:14px">El potencial de las CNN señalado por los antecedentes, ahora llevado de modelo aislado a servicio en uso</p></div>
+  <div class="card carta" style="left:693px;top:450px;width:533px;--g:linear-gradient(90deg,#B08D45,#8E4B3E)"><p class="etq" style="color:#D9A08F">Sorprendió</p><p class="p" style="font-size:26px;margin-top:14px">Datos “de evaluación” contaminados, un explicador defectuoso y un modelo grande que no aportó exactitud</p></div>
+  <div class="card noche carta" style="left:1259px;top:450px;width:533px;--g:linear-gradient(90deg,#2C4A73,#55657A)"><p class="etq">Límites</p><p class="p" style="font-size:26px;margin-top:14px">Población pediátrica, sin validación clínica prospectiva y un filtro que no reconoce la región anatómica</p></div>
+  <p class="a p fin" style="left:128px;top:830px;width:1664px;font-size:30px">Los resultados valen para el conjunto evaluado; llevarlos a adultos u otros centros exige una evaluación externa.</p>
+  <aside class="notas">¿Cómo se ubican estos resultados frente a lo que ya existía? Confirman lo que anticipaban Lubinus y su equipo sobre las redes convolucionales, y dan un paso más allá de Andrade y de Martín de Diego: el clasificador deja de ser un experimento aislado y se convierte en un servicio que cualquiera puede usar. A su vez, aplica al ámbito de la salud el modelo de software como servicio que Vidaurre había probado en las pequeñas empresas.
+Hubo también cosas que no salieron como esperábamos, y las reportamos: un conjunto de evaluación contaminado, un explicador que no hacía lo que decía y un modelo más grande que no mejoraba nada. Cada una nos obligó a corregir y nos dejó un aprendizaje.
+Y somos claros con los límites. Las radiografías corresponden a población pediátrica; no hemos hecho una validación clínica prospectiva en un hospital; y el filtro detecta imágenes que no son radiografías, pero no distingue si la radiografía es de tórax o de otra parte del cuerpo.
+Por eso, los resultados son válidos para el conjunto evaluado. Llevarlos a pacientes adultos, a otros equipos o a otros centros requiere una evaluación externa específica, y eso es justamente lo que proponemos como siguiente paso.</aside>
+</section>
+
+<!-- ==================== 14 · CIERRE ==================== -->
+<section class="sl osc" id="cierre" data-quien="3">
+  <div class="a" id="filo2" style="left:0;top:0;width:20px;height:1080px;background:linear-gradient(180deg,#B08D45,#55657A,#2C4A73)"></div>
+  <p class="ceja">Cierre</p>
+  <h2 class="tit" style="font-size:100px;max-width:1550px">No reemplaza al radiólogo: le dice <span class="acento">por dónde empezar.</span></h2>
+  <svg class="a ecg" style="left:128px;top:540px" width="1664" height="110" viewBox="0 0 1664 110">
+    <defs><linearGradient id="gEcg2" x1="0" x2="1664" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#B08D45" stop-opacity=".2"/><stop offset=".6" stop-color="#55657A"/><stop offset="1" stop-color="#2E6F95"/></linearGradient></defs>
+    <path d="M0 55H1664" stroke="rgba(255,255,255,.08)" stroke-width="2"/>
+    <path class="traza" id="ecg2" d="M0 55H700L730 55L748 25L770 90L792 8L815 102L838 55H1664" fill="none" stroke="url(#gEcg2)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle class="punto" r="7" fill="#2E6F95"/>
+  </svg>
+  <div class="a col" style="left:128px;top:690px;width:533px"><p class="etq" style="color:var(--oro)">Aporte</p><p class="p" style="font-size:26px;margin-top:12px">Clasificación, explicación visual, filtrado y pruebas en un solo servicio web</p></div>
+  <div class="a col" style="left:693px;top:690px;width:533px"><p class="etq" style="color:var(--rosa)">Recomendamos</p><p class="p" style="font-size:26px;margin-top:12px">Diagnosticar los flujos de cada centro, anonimizar las imágenes y recalibrar el umbral</p></div>
+  <div class="a col" style="left:1259px;top:690px;width:533px"><p class="etq" style="color:var(--cian)">Siguiente paso</p><p class="p" style="font-size:26px;margin-top:12px">Evaluación en adultos, validación prospectiva y filtro anatómico</p></div>
+  <p class="a" id="gracias" style="left:128px;top:880px;font:600 40px var(--serif)">Gracias. Quedamos atentos a sus preguntas.</p>
+  <aside class="notas">Para cerrar. El objetivo general se cumplió en el ámbito del desarrollo y de la validación técnica. El principal aporte del trabajo es haber reunido en un solo servicio web la clasificación, la explicación visual del resultado, el filtrado de entradas y un conjunto de pruebas automáticas. En lo práctico, le da a un centro sin infraestructura especializada una herramienta de triaje que funciona desde el navegador.
+En lo teórico, muestra que un modelo de tamaño intermedio basta para esta tarea y que la calibración y la explicabilidad deben tratarse como requisitos del sistema, no como añadidos. En lo metodológico, deja una metodología híbrida de ocho fases y un procedimiento de verificación de independencia de los datos que otros trabajos pueden replicar.
+A los centros de salud les recomendamos diagnosticar primero sus flujos de trabajo e incluir a sus radiólogos en el diseño, anonimizar las imágenes y tratar el umbral de noventa y nueve por ciento como un valor que se recalibra, no como una regla fija. Para futuras investigaciones quedan abiertas tres líneas: evaluar el sistema en pacientes adultos, validarlo de forma prospectiva en un entorno clínico real y enseñarle a reconocer la región anatómica.
+Si tuviéramos que resumirlo en una idea: este sistema no reemplaza al radiólogo; le dice por dónde empezar. En un servicio donde cada placa espera lo mismo, eso puede significar atender primero a quien más lo necesita.
+Muchas gracias. Quedamos atentos a sus preguntas.</aside>
+</section>
+
+<!-- ==================== Cromo global ==================== -->
+<div id="cromo"><div id="marca"><b></b>Clasificación binaria radiológica · URBE 2026</div><div id="quien"><span id="quienTxt">Armando Paris</span><div id="tramos"><span><i></i></span><span><i></i></span><span><i></i></span></div></div></div>
+<div id="numero">01 / 14</div>
+<div id="progreso"></div>
+<div id="cortina"><small>Continúa</small><p id="cortinaQuien">Eduardo Chirinos</p></div>
+<div id="negro"></div>
+</div>
+<div id="ayuda"><b>← →</b> navegar · <b>F</b> pantalla completa · <b>P</b> notas · <b>B</b> pantalla negra · <b>R</b> repetir</div>
+
+<script src="lib/gsap.min.js"></script>
+<script src="lib/SplitText.min.js"></script>
+<script src="lib/DrawSVGPlugin.min.js"></script>
+<script src="lib/MotionPathPlugin.min.js"></script>
+<script src="lib/ScrambleTextPlugin.min.js"></script>
+<script src="lib/CustomEase.min.js"></script>
+<script>
+(function(){
+"use strict";
+if(!window.gsap){document.body.insertAdjacentHTML("beforeend","<p style='position:fixed;top:12px;left:12px;color:#fff;font:16px sans-serif'>Falta la carpeta lib/ junto a index.html.</p>");return;}
+gsap.registerPlugin(SplitText,DrawSVGPlugin,MotionPathPlugin,ScrambleTextPlugin,CustomEase);
+
+/* ---------- Curvas propias y valores por defecto ---------- */
+CustomEase.create("entrada","0.16,1,0.3,1");     // expo-like suave
+CustomEase.create("salida","0.7,0,0.84,0");
+gsap.defaults({ease:"entrada",duration:.9});
+
+var esc=document.getElementById("escenario");
+function ajustar(){var s=Math.min(innerWidth/1920,innerHeight/1080);esc.style.transform="translate("+(-960*s)+"px,"+(-540*s)+"px) scale("+s+")";}
+addEventListener("resize",ajustar);ajustar();
+
+var slides=gsap.utils.toArray(".sl"), N=slides.length;
+var fmt=function(v,d){return v.toLocaleString("es-VE",{minimumFractionDigits:d,maximumFractionDigits:d});};
+var reducido=false;
+var NOMBRES={1:"Armando Paris",2:"Eduardo Chirinos",3:"Manuel Ocando"};
+gsap.matchMedia().add("(prefers-reduced-motion: reduce)",function(){reducido=true;return function(){reducido=false;};});
+
+/* ---------- Fondos vivos: manchas de color y red neuronal ---------- */
+var PALETAS=[["#2E6F95","#2C4A73","#8E4B3E"],["#2C4A73","#B08D45","#3E6E5C"],["#55657A","#2E6F95","#B08D45"]];
+var SITIOS=[[1250,-200,780],[-240,560,700],[680,640,560]];
+function fondos(sl,k){
+  var f=document.createElement("div");f.className="fondo";
+  PALETAS[k%3].forEach(function(c,j){var m=document.createElement("div"),s=SITIOS[j];m.className="mancha";
+    m.style.cssText="left:"+s[0]+"px;top:"+s[1]+"px;width:"+s[2]+"px;height:"+s[2]+"px;background:radial-gradient(circle,"+c+" 0%,"+c+"99 30%,"+c+"00 70%)";f.appendChild(m);});
+  sl.insertBefore(f,sl.firstChild);
+  sl._ambiente=[gsap.to(f.children,{x:"random(-260,260)",y:"random(-200,200)",scale:"random(.8,1.3)",duration:"random(7,12)",ease:"sine.inOut",repeat:-1,yoyo:true,repeatRefresh:true,stagger:.3,paused:true})];
+  if(sl.classList.contains("osc")){var cv=document.createElement("canvas");cv.className="red";cv.width=1920;cv.height=1080;sl.insertBefore(cv,f.nextSibling);sl._red=red(cv);}
+}
+function red(cv){
+  var cx=cv.getContext("2d"),P=[],cols=["#2E6F95","#2C4A73","#55657A","#B08D45"],vivo=false;
+  for(var i=0;i<70;i++)P.push({x:gsap.utils.random(0,1920),y:gsap.utils.random(0,1080),vx:gsap.utils.random(-.6,.6),vy:gsap.utils.random(-.6,.6),r:gsap.utils.random(2,4.5),c:cols[i%4]});
+  function cuadro(){cx.clearRect(0,0,1920,1080);
+    for(var i=0;i<P.length;i++){var a=P[i];a.x+=a.vx;a.y+=a.vy;if(a.x<0||a.x>1920)a.vx*=-1;if(a.y<0||a.y>1080)a.vy*=-1;
+      for(var j=i+1;j<P.length;j++){var b=P[j],dx=a.x-b.x,dy=a.y-b.y,d=dx*dx+dy*dy;if(d<40000){cx.strokeStyle="rgba(140,160,190,"+(.22*(1-d/40000))+")";cx.lineWidth=1.2;cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke();}}
+      cx.globalAlpha=.8;cx.fillStyle=a.c;cx.beginPath();cx.arc(a.x,a.y,a.r,0,7);cx.fill();cx.globalAlpha=1;}}
+  return{on:function(){if(!vivo){vivo=true;gsap.ticker.add(cuadro);}},off:function(){vivo=false;gsap.ticker.remove(cuadro);}};
+}
+
+/* ---------- Utilidades de animación ---------- */
+function contar(tl,el,pos){
+  var fin=parseFloat(el.dataset.contar),d=+(el.dataset.dec||0),suf=el.dataset.suf||"",o={v:parseFloat(el.dataset.desde||0)};
+  el.textContent=fmt(o.v,d)+suf;
+  tl.to(o,{v:fin,duration:1.8,ease:"power3.out",onUpdate:function(){el.textContent=fmt(o.v,d)+suf;}},pos);
+}
+function latido(sl){ // electrocardiograma: dibujo con DrawSVG y punto con MotionPath
+  var svg=sl.querySelector("svg.ecg");if(!svg)return null;
+  var trazas=svg.querySelectorAll(".traza"),guia=svg.querySelector("path.traza:not(.halo)"),punto=svg.querySelector(".punto");
+  gsap.set(trazas,{drawSVG:"0% 0%"});
+  return gsap.timeline({repeat:-1,paused:true,defaults:{ease:"none"}})
+    .to(trazas,{drawSVG:"0% 100%",duration:2.6})
+    .fromTo(punto,{autoAlpha:1},{motionPath:{path:guia,align:guia,alignOrigin:[.5,.5]},duration:2.6},0)
+    .to(punto,{autoAlpha:0,duration:.25},2.6)
+    .to(trazas,{drawSVG:"100% 100%",duration:1.1,ease:"power1.in"},3.0);
+}
+
+/* ---------- Construcción de cada diapositiva ---------- */
+function intro(tl,sl){
+  var ceja=sl.querySelector(".ceja"),tit=sl.querySelector(".tit");
+  if(ceja){var t=ceja.textContent;tl.from(ceja,{autoAlpha:0,y:-16,duration:.5},"intro").to(ceja,{scrambleText:{text:t,chars:"upperCase",speed:.6},duration:.9,ease:"none"},"intro");}
+  if(tit){
+    sl._split=SplitText.create(tit,{type:"lines",mask:"lines",linesClass:"linea"});
+    tl.from(sl._split.lines,{yPercent:110,duration:1.1,stagger:.12},"intro+=0.1");
+    if(tit.tagName==="H2"){
+      var ns="http://www.w3.org/2000/svg",sv=document.createElementNS(ns,"svg");sv.setAttribute("class","subraya");sv.setAttribute("width","260");sv.setAttribute("height","8");
+      sv.innerHTML='<defs><linearGradient id="gs'+sl.id+'" x1="4" x2="256" y1="0" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2E6F95"/><stop offset=".5" stop-color="#2C4A73"/><stop offset="1" stop-color="#8E4B3E"/></linearGradient></defs><line x1="4" y1="4" x2="256" y2="4" stroke="url(#gs'+sl.id+')" stroke-width="7" stroke-linecap="round"/>';
+      tit.insertAdjacentElement("afterend",sv);
+      tl.from(sv.querySelector("line"),{drawSVG:"0%",duration:1},"intro+=0.45");
+    }
+  }
+  tl.addLabel("cuerpo","intro+=0.6");
+}
+var ESCENAS={
+  portada:function(tl,sl){
+    tl.from("#filo",{scaleY:0,transformOrigin:"top",duration:1.2},"intro")
+      .from("#sub",{autoAlpha:0,y:24},"cuerpo+=0.5")
+      .from(["#autores","#casa"],{autoAlpha:0,y:30,stagger:.12},"cuerpo+=0.7");
+  },
+  problema:function(tl,sl){
+    tl.from(sl.querySelectorAll(".c3"),{autoAlpha:0,y:70,stagger:.15},"cuerpo");
+    sl.querySelectorAll("[data-contar]").forEach(function(e){contar(tl,e,"cuerpo+=0.3");});
+    tl.fromTo("#cero",{scale:1},{scale:1.25,duration:.35,yoyo:true,repeat:1,ease:"power2.inOut"},"cuerpo+=1.2")
+      .from(sl.querySelector(".fin"),{autoAlpha:0,y:20},"cuerpo+=1.3");
+  },
+  brecha:function(tl,sl){
+    tl.from(sl.querySelectorAll(".fila"),{autoAlpha:0,x:-50,stagger:.12,duration:.7},"cuerpo")
+      .from("#vacio",{autoAlpha:0,scale:.94,y:20},"cuerpo+=0.9")
+      .to("#vacioEtq",{scrambleText:{text:"El vacío:",chars:"█▓▒░",speed:.5},duration:.8,ease:"none"},"<");
+  },
+  pregunta:function(tl,sl){
+    tl.from("#signo",{autoAlpha:0,scale:.7,rotation:-8,transformOrigin:"50% 60%",duration:1.6,ease:"power3.out"},"intro")
+      .from(sl.querySelectorAll(".clave"),{autoAlpha:0,y:40,stagger:.18,duration:.7},"cuerpo+=1.1");
+    sl._ambiente.push(gsap.to("#signo",{y:-18,duration:3.2,ease:"sine.inOut",repeat:-1,yoyo:true,paused:true}));
+  },
+  objetivos:function(tl,sl){
+    var cards=sl.querySelectorAll(".obj");
+    tl.from("#objGen",{autoAlpha:0,y:30,scale:.97,duration:.8},"cuerpo")
+      .from("#objEsp",{autoAlpha:0,x:-20,duration:.5},"cuerpo+=0.6")
+      .from("#cadena",{drawSVG:"0%",duration:2.2,ease:"power1.inOut"},"cuerpo+=0.7");
+    cards.forEach(function(c,i){tl.from(c,{autoAlpha:0,scale:.85,y:20,duration:.6,ease:"back.out(1.6)"},"cuerpo+="+(0.7+i*.36));});
+  },
+  teoria:function(tl,sl){
+    tl.from(sl.querySelectorAll(".izq"),{autoAlpha:0,x:-120,stagger:.2},"cuerpo")
+      .from(sl.querySelectorAll(".der"),{autoAlpha:0,x:120,stagger:.2},"cuerpo+=0.1")
+      .from(sl.querySelector(".fin"),{autoAlpha:0,y:20},"cuerpo+=0.9");
+  },
+  tipo:function(tl,sl){
+    tl.from(sl.querySelectorAll(".c3"),{autoAlpha:0,y:70,stagger:.15},"cuerpo")
+      .to("#criterio",{boxShadow:"0 0 60px rgba(245,165,36,.55)",duration:.6,yoyo:true,repeat:3,ease:"sine.inOut"},"cuerpo+=0.9")
+      .from(sl.querySelector(".fin"),{autoAlpha:0,y:20},"cuerpo+=1.1");
+  },
+  fases:function(tl,sl){
+    tl.from("#eje",{drawSVG:"0%",duration:1.8,ease:"power2.inOut"},"cuerpo")
+      .from(sl.querySelectorAll(".fase"),{autoAlpha:0,y:40,scale:.92,stagger:.15,duration:.6,ease:"back.out(1.7)"},"cuerpo+=0.1")
+      .from(sl.querySelector(".fin"),{autoAlpha:0,y:20},"cuerpo+=1.5");
+  },
+  datos:function(tl,sl){
+    var C=4273/9010*100;
+    gsap.set("#arcoA",{drawSVG:"0% 0%"});gsap.set("#arcoN",{drawSVG:C+"% "+C+"%"});
+    tl.from(sl.querySelector(".izq"),{autoAlpha:0,x:-120},"cuerpo")
+      .from(sl.querySelector(".der"),{autoAlpha:0,x:120},"cuerpo+=0.1")
+      .from(sl.querySelectorAll(".persona"),{autoAlpha:0,y:30,scale:.5,stagger:.12,ease:"back.out(2)",duration:.6},"cuerpo+=0.5")
+      .to("#arcoA",{drawSVG:"0% "+C+"%",duration:1.2,ease:"power2.out"},"cuerpo+=0.6")
+      .to("#arcoN",{drawSVG:C+"% 100%",duration:1.2,ease:"power2.out"},">-0.3");
+    contar(tl,sl.querySelector("[data-contar]"),"cuerpo+=0.6");
+  },
+  independencia:function(tl,sl){
+    var pasos=sl.querySelectorAll(".paso"),fl=sl.querySelectorAll(".flecha");
+    gsap.set("#anillo",{drawSVG:"0%"});
+    tl.from(pasos[0],{autoAlpha:0,y:50},"cuerpo")
+      .from(fl[0],{drawSVG:"0%",duration:.5,ease:"power1.inOut"},">-0.3")
+      .from(pasos[1],{autoAlpha:0,y:50},">-0.1")
+      .from(fl[1],{drawSVG:"0%",duration:.5,ease:"power1.inOut"},">-0.3")
+      .from(pasos[2],{autoAlpha:0,scale:.8,ease:"back.out(1.7)"},">-0.1")
+      .to("#anillo",{drawSVG:"0% 73%",duration:1.4,ease:"power2.out"},"<0.2");
+    contar(tl,sl.querySelector("[data-contar]"),"<");
+    tl.from(sl.querySelector(".fin"),{autoAlpha:0,y:20},">-0.6");
+  },
+  medicion:function(tl,sl){
+    tl.from(sl.querySelector(".izq"),{autoAlpha:0,x:-120},"cuerpo")
+      .from(sl.querySelector(".der"),{autoAlpha:0,x:120},"cuerpo+=0.15")
+      .from(sl.querySelectorAll("li"),{autoAlpha:0,x:-24,stagger:.09,duration:.5},"cuerpo+=0.5");
+  },
+  resultados:function(tl,sl){
+    var wf=sl.querySelector("#waffle"),errores=[37,118,204,311,377,452,530,611,688,803];
+    for(var i=0;i<900;i++){var c=document.createElement("i");if(errores.indexOf(i)>=0)c.className="err";wf.appendChild(c);}
+    tl.from(sl.querySelectorAll(".met"),{autoAlpha:0,y:60,stagger:.12},"cuerpo");
+    sl.querySelectorAll(".met [data-contar]").forEach(function(e){contar(tl,e,"cuerpo+=0.3");});
+    sl.querySelectorAll(".barra i").forEach(function(b){tl.to(b,{scaleX:+b.dataset.v,duration:1.8,ease:"power3.out"},"cuerpo+=0.3");});
+    tl.from(wf.children,{scale:0,autoAlpha:0,duration:.3,ease:"back.out(2)",stagger:{grid:[30,30],from:"center",amount:1.3}},"cuerpo+=0.9")
+      .to(wf.querySelectorAll(".err"),{scale:2.4,duration:.3,yoyo:true,repeat:3,ease:"power1.inOut"},">")
+      .from(sl.querySelectorAll(".rmsg"),{autoAlpha:0,y:24,stagger:.15},"cuerpo+=1.2");
+  },
+  sistema:function(tl,sl){
+    tl.fromTo("#marco",{clipPath:"inset(0% 100% 0% 0% round 20px)"},{clipPath:"inset(0% 0% 0% 0% round 20px)",duration:1.3,ease:"power3.inOut"},"cuerpo")
+      .from("#marco img",{scale:1.15,duration:1.6},"cuerpo")
+      .from(sl.querySelectorAll("li"),{autoAlpha:0,x:-30,stagger:.15},"cuerpo+=0.4");
+    contar(tl,sl.querySelector("[data-contar]"),"cuerpo+=0.9");
+    sl._ambiente.push(gsap.fromTo("#escaner",{y:-110},{y:676,duration:2.8,ease:"none",repeat:-1,paused:true}));
+  },
+  alcance:function(tl,sl){
+    tl.from(sl.querySelectorAll(".carta"),{autoAlpha:0,rotationY:-80,transformPerspective:1400,transformOrigin:"left center",stagger:.22,duration:1},"cuerpo")
+      .from(sl.querySelector(".fin"),{autoAlpha:0,y:20},"cuerpo+=1");
+  },
+  cierre:function(tl,sl){
+    tl.from("#filo2",{scaleY:0,transformOrigin:"top",duration:1.2},"intro")
+      .from(sl.querySelectorAll(".col"),{autoAlpha:0,y:40,stagger:.15},"cuerpo+=0.6")
+      .from("#gracias",{autoAlpha:0,y:20},"cuerpo+=1.2");
+  }
+};
+
+function construir(){
+  slides.forEach(function(sl,k){
+    fondos(sl,k);
+    var tl=gsap.timeline({paused:true});
+    tl.addLabel("intro",0);
+    intro(tl,sl);
+    if(ESCENAS[sl.id])ESCENAS[sl.id](tl,sl);
+    var lat=latido(sl);if(lat)sl._ambiente.push(lat);
+    sl._tl=tl;
+  });
+  arrancar();
+}
+
+/* ---------- Navegación y transiciones ---------- */
+var actual=-1,viaje=null,inicio=null,ventana=null;
+var tramos=gsap.utils.toArray("#tramos i");
+function cromo(n){
+  var sl=slides[n],q=+sl.dataset.quien;
+  document.getElementById("cromo").classList.toggle("cromo-osc",sl.classList.contains("osc"));
+  document.getElementById("numero").textContent=String(n+1).padStart(2,"0")+" / "+N;
+  document.getElementById("numero").style.color=sl.classList.contains("osc")?"#8FA3BD":"";
+  gsap.to("#quienTxt",{scrambleText:{text:NOMBRES[q],chars:"upperCase",speed:.8},duration:.6,ease:"none"});
+  var porTramo=[0,0,0];slides.forEach(function(s,i){if(i<=n)porTramo[+s.dataset.quien-1]++;});
+  var totTramo=[0,0,0];slides.forEach(function(s){totTramo[+s.dataset.quien-1]++;});
+  tramos.forEach(function(t,i){gsap.to(t,{scaleX:porTramo[i]/totTramo[i],duration:.8});});
+  gsap.to("#progreso",{scaleX:(n+1)/N,duration:.8});
+}
+function ir(n,dir){
+  if(n<0||n>=N||n===actual)return;
+  if(viaje)viaje.progress(1);
+  var prev=slides[actual],sig=slides[n],inicial=actual===0&&n===1,cambio=!!prev&&(prev.dataset.quien!==sig.dataset.quien||inicial);
+  dir=dir||(n>actual?1:-1);
+  viaje=gsap.timeline();
+  if(cambio){
+    document.getElementById("cortinaQuien").textContent=NOMBRES[sig.dataset.quien];document.querySelector("#cortina small").textContent=inicial?"Expone":"Continúa";
+    var sp=SplitText.create("#cortinaQuien",{type:"chars",mask:"chars"});
+    viaje.set("#cortina",{autoAlpha:1,clipPath:dir>0?"inset(0% 100% 0% 0%)":"inset(0% 0% 0% 100%)"})
+      .to("#cortina",{clipPath:"inset(0% 0% 0% 0%)",duration:.6,ease:"power3.inOut"})
+      .from("#cortina small",{autoAlpha:0,y:20,duration:.4},"-=0.15")
+      .from(sp.chars,{yPercent:110,stagger:.035,duration:.6},"<")
+      .addLabel("cubierto");
+  }else viaje.addLabel("cubierto",0);
+  if(prev)viaje.to(prev,{autoAlpha:0,scale:cambio?1:.985,duration:cambio?0.01:.45,ease:"salida",onComplete:function(){prev._ambiente.forEach(function(a){a.pause();});if(prev._red)prev._red.off();gsap.set(prev,{scale:1});}},"cubierto");
+  viaje.call(function(){sig._tl.pause(0);sig._ambiente.forEach(function(a){a.play();});if(sig._red)sig._red.on();},null,"cubierto")
+    .fromTo(sig,{autoAlpha:0,scale:cambio?1:1.015},{autoAlpha:1,scale:1,duration:.55},cambio?"cubierto+=0.35":"cubierto+=0.2")
+    .call(function(){if(reducido)sig._tl.progress(1);else sig._tl.restart();},null,"<0.1");
+  if(cambio)viaje.to("#cortina",{clipPath:dir>0?"inset(0% 0% 0% 100%)":"inset(0% 100% 0% 0%)",duration:.6,ease:"power3.inOut",onComplete:function(){gsap.set("#cortina",{autoAlpha:0});sp.revert();}},"cubierto+=0.35");
+  actual=n;cromo(n);
+  if(location.hash!=="#"+(n+1))history.replaceState(null,"","#"+(n+1));
+  if(!inicio&&n>0)inicio=Date.now();
+  pintarNotas();
+}
+
+/* ---------- Ventana de notas del expositor ---------- */
+function pintarNotas(){
+  if(!ventana||ventana.closed)return;
+  var sl=slides[actual],sg=slides[actual+1],d=ventana.document;
+  d.getElementById("t").textContent=(actual+1)+" / "+N+" · "+NOMBRES[sl.dataset.quien];
+  d.getElementById("n").textContent=sl.querySelector(".notas").textContent.trim();
+  d.getElementById("s").textContent=sg?"Siguiente: "+sg.querySelector(".tit").textContent.trim()+" ("+NOMBRES[sg.dataset.quien]+")":"Última diapositiva";
+}
+function abrirNotas(){
+  ventana=open("","notas_defensa","width=920,height=720");
+  if(!ventana){alert("Permite las ventanas emergentes para ver las notas.");return;}
+  ventana.document.write('<!doctype html><meta charset="utf-8"><title>Notas del expositor</title><body style="margin:0;background:#0B1626;color:#F2F5FA;font:22px/1.6 Segoe UI,Arial,sans-serif;padding:30px"><div style="display:flex;justify-content:space-between;color:#2E6F95;font-weight:600"><span id="t"></span><span id="r">00:00</span></div><div id="n" style="white-space:pre-wrap;margin:24px 0"></div><div id="s" style="color:#B08D45"></div></body>');
+  ventana.document.close();pintarNotas();ventana.addEventListener("keydown",teclas);
+}
+setInterval(function(){if(ventana&&!ventana.closed&&inicio){var s=Math.floor((Date.now()-inicio)/1000),r=ventana.document.getElementById("r");
+  r.textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")+(s>1200?"  · 20 min superados":"");r.style.color=s>1080?"#8E4B3E":"#2E6F95";}},1000);
+
+/* ---------- Teclado y ratón ---------- */
+function teclas(e){
+  var k=e.key;
+  if(["ArrowRight","PageDown"," ","Enter"].indexOf(k)>=0){e.preventDefault();ir(actual+1,1);}
+  else if(["ArrowLeft","PageUp","Backspace"].indexOf(k)>=0){e.preventDefault();ir(actual-1,-1);}
+  else if(k==="Home")ir(0,-1);else if(k==="End")ir(N-1,1);
+  else if(k==="f"||k==="F"){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+  else if(k==="p"||k==="P")abrirNotas();
+  else if(k==="r"||k==="R")slides[actual]._tl.restart();
+  else if(k==="b"||k==="B"||k==="."){var ng=document.getElementById("negro");gsap.to(ng,{autoAlpha:gsap.getProperty(ng,"autoAlpha")>0?0:1,duration:.4,ease:"power1.inOut"});}
+}
+function arrancar(){
+  addEventListener("keydown",teclas);
+  esc.addEventListener("click",function(e){ir(actual+(e.clientX>innerWidth/2?1:-1));});
+  addEventListener("hashchange",function(){var n=parseInt(location.hash.slice(1),10)-1;if(!isNaN(n))ir(n);});
+  var ini=parseInt((location.hash||"#1").slice(1),10)-1;
+  ir(isNaN(ini)?0:gsap.utils.clamp(0,N-1,ini),1);
+  gsap.to("#ayuda",{autoAlpha:0,delay:6,duration:1});
+}
+
+/* Esperar a las fuentes para que SplitText corte bien las líneas (con límite si no hay internet) */
+var listo=false;function una(){if(!listo){listo=true;construir();}}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(una);
+setTimeout(una,2500);
+})();
+</script>
+</body>
+</html>
